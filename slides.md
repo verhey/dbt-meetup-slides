@@ -8,8 +8,6 @@ drawings:
 title: A comedy of Airflows
 ---
 
-<!-- Title slide -->
-
 # A comedy of Airflows
 
 Running dbt core in production the least bad way
@@ -18,7 +16,6 @@ Dean Verhey
 
 Seattle dbt Meetup August 2023
 
-<!-- Bio slide -->
 ---
 transition: fade-out
 ---
@@ -46,7 +43,6 @@ h1 {
 }
 </style>
 
-<!-- TOC Slide -->
 ---
 layout: default
 ---
@@ -78,9 +74,8 @@ How many don't and are considering implementation?
 
 How many are responsible for running dbt in production?
 
-<!-- Slide 4 -->
 ---
-transition: slide-up
+layout: two-cols
 ---
 
 # Production dbt-ing
@@ -89,319 +84,405 @@ transition: slide-up
 - Not very resource-intensive
   - Meaningful compute handled by DWH
 - Does write out a lot of files
-  - target-path, packages-install-path, log-path can help with this
+  - `target-path`, `packages-install-path`, `log-path` can help with this
 - Still requires a Python env
 - New in 1.5 - [programmatic invocations](https://docs.getdbt.com/reference/programmatic-invocations)
 
+::right::
+
+```bash
+❯ dbt run
+04:05  Running with dbt=1.5.2
+04:05  Registered adapter: duckdb=1.5.2
+04:05  ...
+04:05  ...
+04:05  ...
+04:05  Completed successfully
+04:05
+04:05  Done. PASS=7 WARN=0 ERROR=0 SKIP=0 TOTAL=7
+```
+<br>
+
+```python
+from dbt.cli.main import dbtRunner, dbtRunnerResult
+
+# initialize
+dbt = dbtRunner()
+
+# create CLI args as a list of strings
+cli_args = ["run", "--select", "tag:my_tag"]
+
+# run the command
+res: dbtRunnerResult = dbt.invoke(cli_args)
+
+# inspect the results
+for r in res.result:
+    print(f"{r.node.name}: {r.status}")
+```
+
 <!-- Slide 5 -->
 ---
-layout: image-right
-image: https://source.unsplash.com/collection/94734566/1920x1080
+layout: two-cols
 ---
 
-# Code
+# The first steps
 
-Use code snippets and get the highlighting directly![^1]
+- Regular manual runs
+- Cron
+- CI/CD tooling schedulers
+  - _GitHub Actions, CircleCI, Jenkins_
+- Basic cloud schedulers
+  - _ECS scheduled tasks, GCP Cloud Scheduler, Azure Batch Scheduler_
 
-```ts {all|2|1-6|9|all}
-interface User {
-  id: number
-  firstName: string
-  lastName: string
-  role: string
-}
+TODO: Find an image/sample for this slide
 
-function updateUser(id: number, update: User) {
-  const user = getUser(id)
-  const newUser = { ...user, ...update }
-  saveUser(id, newUser)
-}
-```
-
-<arrow v-click="3" x1="400" y1="420" x2="230" y2="330" color="#564" width="3" arrowSize="1" />
-
-[^1]: [Learn More](https://sli.dev/guide/syntax.html#line-highlighting)
+---
+layout: statement
+level: 2
+---
 
 <style>
-.footnotes-sep {
-  @apply mt-20 opacity-10;
-}
-.footnotes {
-  @apply text-sm opacity-75;
-}
-.footnote-backref {
-  display: none;
-}
+h1, h3 {color: #2B90B6;}
 </style>
 
----
+# _Checkpoint_
 
-# Components
+## When have you outgrown basic schedulers?
 
-<div grid="~ cols-2 gap-4">
-<div>
+<br><br>
 
-You can use Vue components directly inside your slides.
+### _Some ideas:_
 
-We have provided a few built-in components like `<Tweet/>` and `<Youtube/>` that you can use directly. And adding your custom components is also super easy.
+You run a lot of jobs for a lot of the day
 
-```html
-<Counter :count="10" />
-```
+You have multiple jobs running at once
 
-<!-- ./components/Counter.vue -->
-<Counter :count="10" m="t-4" />
+Your jobs have complex dependencies
 
-Check out [the guides](https://sli.dev/builtin/components.html) for more.
-
-</div>
-<div>
-
-```html
-<Tweet id="1390115482657726468" />
-```
-
-<Tweet id="1390115482657726468" scale="0.65" />
-
-</div>
-</div>
-
-<!--
-Presenter note with **bold**, *italic*, and ~~striked~~ text.
-
-Also, HTML elements are valid:
-<div class="flex w-full">
-  <span style="flex-grow: 1;">Left content</span>
-  <span>Right content</span>
-</div>
--->
-
+Your platform team says CircleCI costs too much
 
 ---
-class: px-20
+layout: two-cols
 ---
 
-# Themes
+# Orchestrators
 
-Slidev comes with powerful theming support. Themes can provide styles, layouts, components, or even configurations for tools. Switching between themes by just **one edit** in your frontmatter:
+- For more complex scheduling
+  - Running more than just dbt
+  - Managing multiple dbt runs
+  - Coupling your ingestion with dbt
+  - Other ways to start jobs (i.e. sensors)
+  - Define your jobs in Python
+- We’re going to talk about Airflow, but there’s alternatives
+  - Dagster
+  - Prefect
+  - Newer: Mage, Argo
+  - Older: Luigi, Oozie, Azkaban
+- [Is it Pokemon or Big Data?](https://pixelastic.github.io/pokemonorbigdata/)
 
-<div grid="~ cols-2 gap-2" m="-t-2">
+::right::
 
-```yaml
----
-theme: default
----
-```
-
-```yaml
----
-theme: seriph
----
-```
-
-<img border="rounded" src="https://github.com/slidevjs/themes/blob/main/screenshots/theme-default/01.png?raw=true">
-
-<img border="rounded" src="https://github.com/slidevjs/themes/blob/main/screenshots/theme-seriph/01.png?raw=true">
-
-</div>
-
-Read more about [How to use a theme](https://sli.dev/themes/use.html) and
-check out the [Awesome Themes Gallery](https://sli.dev/themes/gallery.html).
-
----
-preload: false
----
-
-# Animations
-
-Animations are powered by [@vueuse/motion](https://motion.vueuse.org/).
-
-```html
-<div
-  v-motion
-  :initial="{ x: -80 }"
-  :enter="{ x: 0 }">
-  Slidev
-</div>
-```
-
-<div class="w-60 relative mt-6">
-  <div class="relative w-40 h-40">
-    <img
-      v-motion
-      :initial="{ x: 800, y: -100, scale: 1.5, rotate: -50 }"
-      :enter="final"
-      class="absolute top-0 left-0 right-0 bottom-0"
-      src="https://sli.dev/logo-square.png"
-    />
-    <img
-      v-motion
-      :initial="{ y: 500, x: -100, scale: 2 }"
-      :enter="final"
-      class="absolute top-0 left-0 right-0 bottom-0"
-      src="https://sli.dev/logo-circle.png"
-    />
-    <img
-      v-motion
-      :initial="{ x: 600, y: 400, scale: 2, rotate: 100 }"
-      :enter="final"
-      class="absolute top-0 left-0 right-0 bottom-0"
-      src="https://sli.dev/logo-triangle.png"
-    />
-  </div>
-
-  <div
-    class="text-5xl absolute top-14 left-40 text-[#2B90B6] -z-1"
-    v-motion
-    :initial="{ x: -80, opacity: 0}"
-    :enter="{ x: 0, opacity: 1, transition: { delay: 2000, duration: 1000 } }">
-    Slidev
-  </div>
-</div>
-
-<!-- vue script setup scripts can be directly used in markdown, and will only affects current page -->
-<script setup lang="ts">
-const final = {
-  x: 0,
-  y: 0,
-  rotate: 0,
-  scale: 1,
-  transition: {
-    type: 'spring',
-    damping: 10,
-    stiffness: 20,
-    mass: 2
-  }
-}
-</script>
-
-<div
-  v-motion
-  :initial="{ x:35, y: 40, opacity: 0}"
-  :enter="{ y: 0, opacity: 1, transition: { delay: 3500 } }">
-
-[Learn More](https://sli.dev/guide/animations.html#motion)
-
-</div>
-
----
-
-# LaTeX
-
-LaTeX is supported out-of-box powered by [KaTeX](https://katex.org/).
-
+<img src="https://airflow.apache.org/docs/apache-airflow/stable/_images/graph.png" />
 <br>
-
-Inline $\sqrt{3x-1}+(1+x)^2$
-
-Block
-$$
-\begin{array}{c}
-
-\nabla \times \vec{\mathbf{B}} -\, \frac1c\, \frac{\partial\vec{\mathbf{E}}}{\partial t} &
-= \frac{4\pi}{c}\vec{\mathbf{j}}    \nabla \cdot \vec{\mathbf{E}} & = 4 \pi \rho \\
-
-\nabla \times \vec{\mathbf{E}}\, +\, \frac1c\, \frac{\partial\vec{\mathbf{B}}}{\partial t} & = \vec{\mathbf{0}} \\
-
-\nabla \cdot \vec{\mathbf{B}} & = 0
-
-\end{array}
-$$
-
-<br>
-
-[Learn more](https://sli.dev/guide/syntax#latex)
+<img src="https://raw.githubusercontent.com/astronomer/astronomer-cosmos/main/docs/_static/jaffle_shop_task_group.png" />
 
 ---
+layout: default
+---
+# Starting out with Airflow via the BashOperator
 
-# Diagrams
+```python {10|15|18|all} {lines: true}
+with DAG(
+    dag_id="example_bash_operator",
+    schedule="@hourly",
+    start_date=datetime.datetime(2023, 8, 10),
+    catchup=False,
+) as dag:
 
-You can create diagrams / graphs from textual descriptions, directly in your Markdown.
+    run_dbt = BashOperator(
+        task_id="run_dbt",
+        bash_command="dbt run --profile prod",
+    )
 
-<div class="grid grid-cols-3 gap-10 pt-4 -mb-6">
+    test_dbt = BashOperator(
+        task_id="test_dbt",
+        bash_command="dbt test --profile prod",
+    )
 
-```mermaid {scale: 0.5}
-sequenceDiagram
-    Alice->John: Hello John, how are you?
-    Note over Alice,John: A typical interaction
+run_dbt >> test_dbt
 ```
 
-```mermaid {theme: 'neutral', scale: 0.8}
-graph TD
-B[Text] --> C{Decision}
-C -->|One| D[Result 1]
-C -->|Two| E[Result 2]
-```
+_"Starting today, run `dbt run`, then `dbt test` once an hour at the top of the hour"_
+
+---
+layout: two-cols
+---
+
+# BashOperator issues
+
+- **Requirements whack-a-mole**
+  - [One of the many dbt-snowflake GH issues about installing dbt on MWAA](https://github.com/dbt-labs/dbt-snowflake/issues/687)
+  - [Official AWS MWAAA guide about working around conflicting dependencies](https://docs.aws.amazon.com/mwaa/latest/userguide/samples-dbt.html)
+- **File writing conflicts**
+  - Concurrent runs can step on each other
+- **Lifecycle conflicts**
+  - Upgrading dbt involves Airflow requirements changes
+  - In some managed services this can mean downtime
+
+TODO: Find a suitable image/right content for this slide
+
+---
+layout: statement
+level: 2
+---
+
+<style>
+h1, h3 {color: #2B90B6;}
+</style>
+
+# _Checkpoint_
+
+## When have you outgrown the bash operator?
+
+<br><br>
+
+### _Some ideas:_
+
+You are in dependency hell
+
+You are in race condition hell
+
+---
+layout: two-cols
+---
+
+# What now?
 
 ```mermaid
-mindmap
-  root((mindmap))
-    Origins
-      Long history
-      ::icon(fa fa-book)
-      Popularisation
-        British popular psychology author Tony Buzan
-    Research
-      On effectivness<br/>and features
-      On Automatic creation
-        Uses
-            Creative techniques
-            Strategic planning
-            Argument mapping
-    Tools
-      Pen and paper
-      Mermaid
+flowchart TD
+    A{I have outgrown the BashOperator}
+     --> B[Get hackin']
+    A -->C[Get containerizin']
 ```
 
-```plantuml {scale: 0.7}
-@startuml
+::right::
 
-package "Some Group" {
-  HTTP - [First Component]
-  [Another Component]
-}
+- **Get hackin’**
+  - `PythonVirtualenvOperator`
+  - Call a full script from the BashOperator
+    - Create a venv
+    - Install dependencies to that venv
+    - Run dbt
+    - Clean up?
+- **Get containerizin’**
+  - Isolate dbt from Airflow
+  - Trade code complexity for infra complexity
 
-node "Other Groups" {
-  FTP - [Second Component]
-  [First Component] --> FTP
-}
+---
+layout: default
+---
 
-cloud {
-  [Example 1]
-}
+# Containerization Basics
 
+- In Airflow: `DockerOperator` -> `ECSOperator` -> `KubernetesPodOperator`
+  - Each isolate your tasks from others
+  - Each require some infra work outside Airflow (K8s cluster, ECS cluster, container registry)
+- In general - why containerize?
+  - Scalability - vertically and horizontally
+  - Isolation
+- Downsides
+  - Architectural complexity
+  - Local dev gets even more difficult
 
-database "MySql" {
-  folder "This is my folder" {
-    [Folder 3]
-  }
-  frame "Foo" {
-    [Frame 4]
-  }
-}
+---
+layout: default
+---
+# Running dbt via the ECSOperator
 
-
-[Another Component] --> [Example 1]
-[Example 1] --> [Folder 3]
-[Folder 3] --> [Frame 4]
-
-@enduml
+```python {14|all} {lines: true}
+with DAG(
+  # same as before
+) as dag:
+    run = ECSOperator(
+        task_id="run",
+        dag=dag,
+        cluster="YOUR_CLUSTER_GOES_HERE,
+        task_definition="YOUR_TASK_DEF_GOES_HERE",
+        launch_type="FARGATE",
+        overrides={
+            "containerOverrides": [
+                {
+                    "name": "ecs-airflow-dbt-task",
+                    "command": [f"dbt run --profile prod"],
+                }
+            ],
+        },
+        network_configuration={"YOUR_NETWORK": "CONF_GOES_HERE"},
+    )
 ```
 
-</div>
-
-[Learn More](https://sli.dev/guide/syntax.html#diagrams)
+_Not pictured: a **lot** of IAM work_
 
 ---
-src: ./pages/multiple-entries.md
-hide: false
+layout: statement
+level: 2
 ---
 
+<style>
+h1, h3 {color: #2B90B6;}
+</style>
+
+# _Checkpoint_
+
+## When have you outgrown this?
+
+<br><br>
+
+### _Some ideas:_
+
+You maybe shouldn't have been here to begin with
+
+You have outgrown Airflow, dbt, or batch processing
+
 ---
-layout: center
-class: text-center
+layout: statement
 ---
 
-# Learn More
+# What we did at LaunchDarkly
 
-[Documentations](https://sli.dev) · [GitHub](https://github.com/slidevjs/slidev) · [Showcases](https://sli.dev/showcases.html)
+<br>
+```mermaid
+flowchart LR
+   A[Manual runs] -- Too many models/devs --> B[BashOperator] -- Dependency hell --> C[Custom plugin] -- Race conditions --> D[ECS + Containers]
+```
+
+---
+layout: two-cols
+level: 2
+---
+
+# The early days
+
+_Disclaimer: I wasn’t actually here for most of this_
+
+- With minimal SLAs, someone ran dbt locally
+- Moved to Airflow 1 on GCP using GCP Composer
+  - BashOperator first, “custom” Python plugin second
+  - Forked from gocardless/airflow-dbt
+  - Per task, created Python virtualenvs in /tmp
+- Dbt project manually deployed to /dags folder of GCS after every merge
+
+::right::
+
+- 20-50 models
+- \<10m total runtime
+- 1-2 devs
+- 2-3 deploys per week
+
+- TODO: Fix slide formatting
+
+---
+layout: two-cols
+level: 2
+---
+
+# The GCP days
+
+- Python plugin mostly worked for a long time
+- 10ish dbt tasks per day
+- Team grew from 2 to 4 in 2021, and from 4 to 8 in 2022
+- dbt models grew from ~20 to ~200
+- Runtime grew from 1h to 4h
+- SLAs got tighter - some models running hourly, most still twice daily
+- Apple Silicon prompted a surprise dbt upgrade
+- LaunchDarkly is not a GCP shop - and AWS had a managed Airflow product now
+
+::right::
+
+- 200+ models
+- 4h total runtime
+- 4-8 devs
+- 2-3 deploys per day
+
+- TODO: Fix slide formatting
+
+---
+layout: two-cols
+level: 2
+---
+
+# The AWS migration
+
+- Team grew, systems did not
+- Manual deploys happen 4-5 times per day and take 30 minutes
+- Plan was to lift and shift to AWS MWAA
+- Same Airflow version, same dbt version, same custom plugin code
+- Ran into tons of problems with that lift/shift
+  - Different executor configuration on MWAA and GCP
+  - MWAA plugin deploys cause partial downtime
+- Re-architected to use ECS Fargate
+
+::right::
+
+- 600+ models
+- 6h total runtime
+- 8 devs
+- 4-5 deploys per day
+
+---
+layout: two-cols
+level: 2
+---
+
+# The end
+
+- Now 7 devs, still 600 dbt models, now 2.5h runtime
+- Deploys automated in CircleCI - still deploying 4-5 times per day
+- ~60 dbt tasks running per day
+- dbt + dependency upgrades more manageable
+- Datadog + Cloudwatch for monitoring
+- ECS spend <$10/month
+- Extra complexity around manually stopping tasks
+- Local dev still impossible
+- Next steps:
+  - Airflow 1 -> Airflow 2
+  - Downsizing our dbt project
+
+::right::
+
+- Still 600 models
+- 2.5h total runtime
+- 7 devs
+- 4-5 deploys per day
+
+- TODO: Fix slide formatting
+
+---
+layout: statement
+---
+
+# Is this… good?
+
+<br>
+😬 I think this is the most scalable way to run dbt on Airflow
+
+🙂 We’re happy with it for our workload
+
+🫠 It feels more complex than it needs to be
+
+🚦 SLAs are all green, and we have plenty of headroom to scale
+
+---
+layout: end
+---
+
+# Thank you!
+
+<br><br><br><br>
+## Contact:
+
+[linkedin/deanverhey](https://www.linkedin.com/in/deanverhey/)
+
+[github/verhey](https://github.com/verhey)
+
+[Slide source code](https://github.com/verhey) # todo: update!
