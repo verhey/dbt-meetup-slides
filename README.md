@@ -15,7 +15,7 @@ Pre-requisites: A semi-recent version of Node
 
 ## Deployment
 
-The `main` branch of this site is deployed to a Netlify site at TODO: LINK URL
+The `main` branch of this site is deployed to a Netlify site at https://dean-meetup-slides.netlify.app
 
 ## References
 

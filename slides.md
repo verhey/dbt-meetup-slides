@@ -567,4 +567,6 @@ layout: end
 
 [dbt Slack @Dean Verhey](https://getdbt.slack.com/archives/D021HPX8VL7)
 
-[Slide source code](https://github.com/verhey) # todo: update!
+Slides link: [dean-meetup-slides.netlify.app](https://dean-meetup-slides.netlify.app/)
+
+Slide source code: [github/verhey/dbt-meetup-slides](https://github.com/verhey/dbt-meetup-slides)
