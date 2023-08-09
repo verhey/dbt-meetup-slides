@@ -29,7 +29,7 @@ layout: two-cols
 ::right::
 
 - 💼 **Currently** - Senior Data/Analytics Engineer at [LaunchDarkly](https://launchdarkly.com/)
-  - LD is a feature management and experimentation SAAS company - we make dev tools
+  - LD is a dev tools company - feature management and experimentation
 - 👋 **Previously** - Data or software engineering at:
     - 💵 [Coupa Software](https://www.coupa.com/)
     - ✈️ [Yapta](https://www.geekwire.com/2020/coupa-software-acquiring-seattle-startup-yapta-help-businesses-cut-travel-costs/) (acquired by Coupa in 2020)
@@ -256,6 +256,15 @@ hideInToc: true
 ::right::
 ![](/dependency_hell.png)
 
+```mermaid
+flowchart TD
+    A[dbt requirements] --> D
+    B[airflow requirements] --> D
+    C[any other requirements] --> D
+    D[Combined Airflow dependencies]:::bad
+    classDef bad fill:teal
+```
+
 ---
 layout: statement
 hideInToc: true
@@ -275,7 +284,7 @@ h1, h3 {color: #2B90B6;}
 
 You are in dependency hell
 
-You are in race condition hell
+You are in concurrency hell
 
 ---
 layout: two-cols
@@ -284,14 +293,14 @@ hideInToc: true
 
 # What now?
 
-- **Get hackin’**
+- 🤠 **Get hackin’**
   - `PythonVirtualenvOperator`
   - Call a full script from the BashOperator or PythonOperator
     1. Create a venv
     2. Install dependencies to that venv
     3. Run dbt
     4. Clean up*
-- **Get containerizin’**
+- 🐳 **Get containerizin’**
   - Isolate dbt from Airflow
   - Trade code complexity for infra complexity
   - Give Airflow much less to do
@@ -323,7 +332,7 @@ base_script = """
 """
 run = BashOperator(
   bash_command=base_script,
-  env={"DBT_COMMAND" = "dbt run --profile prod"}
+  env={"DBT_COMMAND" = "run --profile prod"}
 )
 ```
 
@@ -366,7 +375,7 @@ with DAG(
             "containerOverrides": [
                 {
                     "name": "ecs-airflow-dbt-task",
-                    "command": [f"dbt run --profile prod"],
+                    "command": ["dbt run --profile prod"],
                 }
             ],
         },
@@ -374,7 +383,9 @@ with DAG(
     )
 ```
 
-_Not pictured: a lot of Terraform work_
+_Not pictured: a lot of infra work_
+
+_Create an ECS cluster, create an ECS task definition, create an ECR repo, let them talk to each other..._
 
 ---
 layout: statement
@@ -490,7 +501,7 @@ flowchart LR
    A[GCP is so 2021]:::inactive
    --> B[The plugin no longer 'just works' \n Our systems did not evolve with our team \n LaunchDarkly is not a GCP shop]:::active
    -- "Lift and shift 🙏"
-   --> C[Shifted to MWAA, things largely fine \n As we gradually cutover DAGs and load, things not fine \n We learn how Airflow actually works]:::active
+   --> C[Shifted to MWAA, things largely fine \n As we gradually cutover DAGs, things are not fine \n We learn how Airflow actually works]:::active
    -- We give up on the lift and shift
    --> D[dbt operations moved to ECS Fargate \n Deploys fully automated \n Plugin deleted]:::active
     classDef active fill:teal
