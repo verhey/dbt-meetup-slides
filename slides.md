@@ -9,15 +9,6 @@ title: A comedy of Airflows
 hideInToc: true
 ---
 
-<style>
-  h1 {
-    background-image: linear-gradient(#4EC5D4, #146b8c);
-    color: transparent;
-    background-clip: text;
-    -webkit-background-clip: text;
-  }
-</style>
-
 # A comedy of Airflows
 
 Running dbt core in production the least bad way
@@ -32,6 +23,11 @@ layout: two-cols
 
 # Who am I?
 
+
+<img src="/headshot.jpg" style="border-radius: 50%;" />
+
+::right::
+
 - 💼 **Currently** - Senior Data/Analytics Engineer at [LaunchDarkly](https://launchdarkly.com/)
   - LD is a feature management and experimentation SAAS company - we make dev tools
 - 👋 **Previously** - Data or software engineering at:
@@ -41,9 +37,6 @@ layout: two-cols
     - 🎓 Western Washington University
     - 🛫 University of North Dakota
 - 🏔️ **When not working** - Skiing, spending time with my partner and [our cat](https://deancat.netlify.app/)
-
-::right::
-
 
 ---
 layout: default
@@ -250,7 +243,7 @@ hideInToc: true
 # BashOperator issues
 
 - **Requirements whack-a-mole**
-  - ☹️ [Official AWS MWAAA guide about working around conflicting dependencies](https://docs.aws.amazon.com/mwaa/latest/userguide/samples-dbt.html)
+  - 🫠 [Official AWS MWAAA guide about working around conflicting dependencies](https://docs.aws.amazon.com/mwaa/latest/userguide/samples-dbt.html)
 - **File writing conflicts**
   - dbt artifacts + target + logs can be overwritten by concurrent DAG runs - or not written at all
     - Differs between managed Airflow services
@@ -571,5 +564,7 @@ layout: end
 [linkedin/deanverhey](https://www.linkedin.com/in/deanverhey/)
 
 [github/verhey](https://github.com/verhey)
+
+[dbt Slack @Dean Verhey](https://getdbt.slack.com/archives/D021HPX8VL7)
 
 [Slide source code](https://github.com/verhey) # todo: update!
