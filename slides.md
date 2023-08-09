@@ -17,7 +17,7 @@ Dean Verhey
 Seattle dbt Meetup August 2023
 
 ---
-transition: fade-out
+layout: default
 ---
 
 # Who am I?
@@ -30,6 +30,8 @@ transition: fade-out
     - 🎓 Western Washington University
     - 🛫 University of North Dakota
 - 🏔️ **When not working** - Skiing, spending time with my partner and [our cat](https://deancat.netlify.app/)
+
+TODO: Headshot or other info
 
 <style>
 h1 {
@@ -127,14 +129,33 @@ layout: two-cols
 
 # The first steps
 
-- Regular manual runs
-- Cron
-- CI/CD tooling schedulers
+- **Regular manual runs**
+- **Cron**
+- **CI/CD tooling schedulers**
   - _GitHub Actions, CircleCI, Jenkins_
-- Basic cloud schedulers
+- **Basic cloud schedulers**
   - _ECS scheduled tasks, GCP Cloud Scheduler, Azure Batch Scheduler_
 
-TODO: Find an image/sample for this slide
+::right::
+<img src="https://i.imgur.com/tm7yfxo.png"/>
+
+<br>
+```yml
+# .circleci/config.yml
+jobs:
+  run-dbt:
+    steps:
+      - checkout
+      - run: dbt build
+
+workflows:
+  daily-run-dbt:
+    jobs:
+      - run-dbt:
+          triggers:
+            - schedule:
+                cron: "0 0 * * *"
+```
 
 ---
 layout: statement
@@ -167,18 +188,18 @@ layout: two-cols
 
 # Orchestrators
 
-- For more complex scheduling
+- **For more complex scheduling**
   - Running more than just dbt
   - Managing multiple dbt runs
   - Coupling your ingestion with dbt
   - Other ways to start jobs (i.e. sensors)
   - Define your jobs in Python
-- We’re going to talk about Airflow, but there’s alternatives
+- **We’re going to talk about Airflow, but there’s alternatives**
+  - dbt Cloud
   - Dagster
   - Prefect
   - Newer: Mage, Argo
   - Older: Luigi, Oozie, Azkaban
-- [Is it Pokemon or Big Data?](https://pixelastic.github.io/pokemonorbigdata/)
 
 ::right::
 
@@ -186,12 +207,15 @@ layout: two-cols
 <br>
 <img src="https://raw.githubusercontent.com/astronomer/astronomer-cosmos/main/docs/_static/jaffle_shop_task_group.png" />
 
+<p style="text-align: center">
+  <a href="https://pixelastic.github.io/pokemonorbigdata/">Is it Pokemon or Big Data?</a>
+</p>
 ---
 layout: default
 ---
 # Starting out with Airflow via the BashOperator
 
-```python {10|15|18|all} {lines: true}
+```python {all|10,15|18|all} {lines: true}
 with DAG(
     dag_id="example_bash_operator",
     schedule="@hourly",
@@ -221,15 +245,18 @@ layout: two-cols
 # BashOperator issues
 
 - **Requirements whack-a-mole**
-  - [One of the many dbt-snowflake GH issues about installing dbt on MWAA](https://github.com/dbt-labs/dbt-snowflake/issues/687)
-  - [Official AWS MWAAA guide about working around conflicting dependencies](https://docs.aws.amazon.com/mwaa/latest/userguide/samples-dbt.html)
+  - ☹️ [Official AWS MWAAA guide about working around conflicting dependencies](https://docs.aws.amazon.com/mwaa/latest/userguide/samples-dbt.html)
 - **File writing conflicts**
-  - Concurrent runs can step on each other
+  - dbt artifacts + target + logs can be overwritten by concurrent DAG runs - or not written at all
+    - Differs between managed Airflow services
+  - 💭 If redirecting to `/tmp`, clean it up!
 - **Lifecycle conflicts**
-  - Upgrading dbt involves Airflow requirements changes
+  - Upgrading dbt involves requirements changes for your entire Airflow instance
   - In some managed services this can mean downtime
 
-TODO: Find a suitable image/right content for this slide
+
+::right::
+<img src="https://i.imgur.com/eskvZ9j.png"/>
 
 ---
 layout: statement
@@ -258,56 +285,81 @@ layout: two-cols
 
 # What now?
 
-```mermaid
-flowchart TD
-    A{I have outgrown the BashOperator}
-     --> B[Get hackin']
-    A -->C[Get containerizin']
-```
-
-::right::
-
 - **Get hackin’**
   - `PythonVirtualenvOperator`
-  - Call a full script from the BashOperator
-    - Create a venv
-    - Install dependencies to that venv
-    - Run dbt
-    - Clean up?
+  - Call a full script from the BashOperator or PythonOperator
+    1. Create a venv
+    2. Install dependencies to that venv
+    3. Run dbt
+    4. Clean up*
 - **Get containerizin’**
   - Isolate dbt from Airflow
   - Trade code complexity for infra complexity
+  - Give Airflow much less to do
+
+::right::
+```python {all|3-12|14-16|18-19|21-22|26|all} {lines: true}
+base_script = """
+    set -e
+    # 1) make a venv namespaced with the task
+    RUN_ID={{ task.task_id ~ '_' ~ run_id }}
+    CLEAN_RUN_ID=$(echo $RUN_ID | tr :+. _)
+
+    mkdir /tmp/$CLEAN_RUN_ID
+    DBT_VENV_DIR=/tmp/$CLEAN_RUN_ID/dbt_venv
+
+    /usr/bin/python3 -m virtualenv \
+      --python /usr/bin/python3 \
+      --creator venv --always-copy $DBT_VENV_DIR
+
+    # 2) Install dependencies to that venv
+    $DBT_VENV_DIR/bin/pip3 install -r \
+      $DBT_PROFILES_DIR/dbt_requirements.txt
+
+    # 3) run dbt - dbt command envvar set in operator
+    $DBT_VENV_DIR/bin/dbt $DBT_COMMAND
+
+    # 4) clean up
+    rm -rf $DBT_VENV_DIR
+"""
+run = BashOperator(
+  bash_command=base_script,
+  env={"DBT_COMMAND" = "dbt run --profile prod"}
+)
+```
 
 ---
-layout: default
+layout: two-cols
 ---
 
 # Containerization Basics
 
-- In Airflow: `DockerOperator` -> `ECSOperator` -> `KubernetesPodOperator`
+- `DockerOperator`, `ECSOperator`, or `KubernetesPodOperator`
   - Each isolate your tasks from others
   - Each require some infra work outside Airflow (K8s cluster, ECS cluster, container registry)
 - In general - why containerize?
   - Scalability - vertically and horizontally
   - Isolation
 - Downsides
-  - Architectural complexity
-  - Local dev gets even more difficult
+  - Complexity
+  - In the context of Airflow, local dev gets even more difficult
 
+::right::
+<img src="https://i.imgur.com/iJ1mUZU.png" />
 ---
 layout: default
 ---
 # Running dbt via the ECSOperator
 
-```python {14|all} {lines: true}
+```python {all|14} {lines: true}
 with DAG(
   # same as before
 ) as dag:
     run = ECSOperator(
         task_id="run",
         dag=dag,
-        cluster="YOUR_CLUSTER_GOES_HERE,
-        task_definition="YOUR_TASK_DEF_GOES_HERE",
+        cluster="dbt-airflow-cluster",
+        task_definition="dbt-airflow-task-def",
         launch_type="FARGATE",
         overrides={
             "containerOverrides": [
@@ -321,7 +373,7 @@ with DAG(
     )
 ```
 
-_Not pictured: a **lot** of IAM work_
+_Not pictured: a lot of Terraform work_
 
 ---
 layout: statement
@@ -350,14 +402,27 @@ layout: statement
 
 # What we did at LaunchDarkly
 
+<!-- Todo: make diagram flow through subsequent slides
+Include year
+Include dbt version
+
+Audit dbt model
+ -->
+
 <br>
+
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 flowchart LR
-   A[Manual runs] -- Too many models/devs --> B[BashOperator] -- Dependency hell --> C[Custom plugin] -- Race conditions --> D[ECS + Containers]
+   A[<b>2018</b> \n Manual runs] -- Growth
+   --> B[<b>2019</b> \n BashOperator] -- Dependency hell
+   --> C[<b>2020</b> \n Custom plugin] -- AWS migration
+   --> D[<b>2022</b> \n Lift and shift] -- Race conditions
+   --> E[<b>2023</b> \n ECS + Containers]
 ```
 
 ---
-layout: two-cols
+layout: statement
 level: 2
 ---
 
@@ -365,97 +430,115 @@ level: 2
 
 _Disclaimer: I wasn’t actually here for most of this_
 
-- With minimal SLAs, someone ran dbt locally
-- Moved to Airflow 1 on GCP using GCP Composer
-  - BashOperator first, “custom” Python plugin second
-  - Forked from gocardless/airflow-dbt
-  - Per task, created Python virtualenvs in /tmp
-- Dbt project manually deployed to /dags folder of GCS after every merge
+```mermaid
+%%{init: {'theme':'dark'}}%%
+flowchart LR
+   A[Manual runs \n Weekend inactivity \n Short dbt runtimes]:::active
+   -- "This went exactly as you expect it would"
+   --> B[Moved to Airflow 1 on GCP Composer \n BashOperator first]:::active
+   -- "Dependency hell"
+   --> C[Custom plugin \n Created venvs in /tmp]:::active
+   --> D[Happy days on GCP, AWS migration looming]:::inactive
+    classDef active fill:teal
+    classDef inactive opacity:50%,stroke-dasharray: 5 5
+```
 
-::right::
+📆 _2019-2021_
 
-- 20-50 models
-- \<10m total runtime
-- 1-2 devs
-- 2-3 deploys per week
+📚 _20-50 models_
 
-- TODO: Fix slide formatting
+⌚️ _\<10m total runtime_
+
+🤓 _1-3 devs_
+
+🎫 _2-3 deploys per week_
 
 ---
-layout: two-cols
+layout: statement
 level: 2
 ---
 
 # The GCP days
 
-- Python plugin mostly worked for a long time
-- 10ish dbt tasks per day
-- Team grew from 2 to 4 in 2021, and from 4 to 8 in 2022
-- dbt models grew from ~20 to ~200
-- Runtime grew from 1h to 4h
-- SLAs got tighter - some models running hourly, most still twice daily
-- Apple Silicon prompted a surprise dbt upgrade
-- LaunchDarkly is not a GCP shop - and AWS had a managed Airflow product now
+```mermaid
+%%{init: {'theme':'dark'}}%%
+flowchart LR
+   A[Manual runs, BashOperator]:::inactive
+   --> B[Python plugin mostly 'just works' \n SLAs start existing \n Team grows \n SLAs get tighter]:::active
+   -- "IT procures an Apple Silicon MBP"
+   --> C[We have to upgrade dbt, plugin falls apart \n Team grows some more \n Hourly dbt DAG introduced \n Deploys start becoming a giant pain]:::active
+   -- AWS has a managed Airflow offering now
+   --> D["Cloud migrations 😰"]:::inactive
+    classDef active fill:teal
+    classDef inactive opacity:50%,stroke-dasharray: 5 5
+```
 
-::right::
+📆 _2021-2022_
 
-- 200+ models
-- 4h total runtime
-- 4-8 devs
-- 2-3 deploys per day
+📚 _200+ models_
 
-- TODO: Fix slide formatting
+⌚️ _4h total runtime_
+
+🤓 _4-6 devs_
+
+🎫 _15+ deploys per week_
 
 ---
-layout: two-cols
+layout: statement
 level: 2
 ---
 
 # The AWS migration
 
-- Team grew, systems did not
-- Manual deploys happen 4-5 times per day and take 30 minutes
-- Plan was to lift and shift to AWS MWAA
-- Same Airflow version, same dbt version, same custom plugin code
-- Ran into tons of problems with that lift/shift
-  - Different executor configuration on MWAA and GCP
-  - MWAA plugin deploys cause partial downtime
-- Re-architected to use ECS Fargate
+```mermaid
+%%{init: {'theme':'dark'}}%%
+flowchart LR
+   A[GCP is so 2021]:::inactive
+   --> B[The Python plugin and GCP no longer 'just works' \n Our architecture did not grow with our team \n LaunchDarkly is not a GCP shop]:::active
+   -- "Lift and shift - what could go wrong?"
+   --> C[Plugin moved to MWAA, things largely fine \n As we gradually cutover DAGs and load, things stop being fine \n We stare into the abyss and learn how Airflow actually works]:::active
+   -- We give up on the lift and shift
+   --> D[dbt operations moved to ECS Fargate \n Deploys fully automated \n Plugin deleted]:::active
+    classDef active fill:teal
+    classDef inactive opacity:50%,stroke-dasharray: 5 5
+```
 
-::right::
+📆 _2022-2023_
 
-- 600+ models
-- 6h total runtime
-- 8 devs
-- 4-5 deploys per day
+📚 _600+ models_
+
+⌚️ _6h total runtime_
+
+🤓 _6-8 devs_
+
+🎫 _20+ deploys per week_
 
 ---
-layout: two-cols
+layout: statement
 level: 2
 ---
+# Today
 
-# The end
+```mermaid
+%%{init: {'theme':'dark'}}%%
+flowchart LR
+   A[We stared into the abyss]:::inactive
+   -- "The abyss stared back"
+   --> B[Overall, we're happier \n We should have automated deploys earlier \n Some extra complexity intervening on running tasks \n dbt + dependency upgrades much more manageable]:::active
+   --> C[We need to take advantage of this work]:::inactive
+    classDef active fill:teal
+    classDef inactive opacity:50%,stroke-dasharray: 5 5
+```
 
-- Now 7 devs, still 600 dbt models, now 2.5h runtime
-- Deploys automated in CircleCI - still deploying 4-5 times per day
-- ~60 dbt tasks running per day
-- dbt + dependency upgrades more manageable
-- Datadog + Cloudwatch for monitoring
-- ECS spend <$10/month
-- Extra complexity around manually stopping tasks
-- Local dev still impossible
-- Next steps:
-  - Airflow 1 -> Airflow 2
-  - Downsizing our dbt project
+📆 _2023+_
 
-::right::
+📚 _600+ models_
 
-- Still 600 models
-- 2.5h total runtime
-- 7 devs
-- 4-5 deploys per day
+⌚️ _2.5h total runtime_
 
-- TODO: Fix slide formatting
+🤓 _7 devs_
+
+🎫 _20+ deploys per week_
 
 ---
 layout: statement
@@ -469,6 +552,8 @@ layout: statement
 🙂 We’re happy with it for our workload
 
 🫠 It feels more complex than it needs to be
+
+🐙 Airflow is probably not the executor of the future
 
 🚦 SLAs are all green, and we have plenty of headroom to scale
 
