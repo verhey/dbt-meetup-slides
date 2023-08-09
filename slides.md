@@ -6,7 +6,17 @@ lineNumbers: false
 drawings:
   persist: false
 title: A comedy of Airflows
+hideInToc: true
 ---
+
+<style>
+  h1 {
+    background-image: linear-gradient(#4EC5D4, #146b8c);
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
+</style>
 
 # A comedy of Airflows
 
@@ -17,13 +27,14 @@ Dean Verhey
 Seattle dbt Meetup August 2023
 
 ---
-layout: default
+layout: two-cols
 ---
 
 # Who am I?
 
 - 💼 **Currently** - Senior Data/Analytics Engineer at [LaunchDarkly](https://launchdarkly.com/)
-- 👋 **Previously** - Data and/or software engineering at:
+  - LD is a feature management and experimentation SAAS company - we make dev tools
+- 👋 **Previously** - Data or software engineering at:
     - 💵 [Coupa Software](https://www.coupa.com/)
     - ✈️ [Yapta](https://www.geekwire.com/2020/coupa-software-acquiring-seattle-startup-yapta-help-businesses-cut-travel-costs/) (acquired by Coupa in 2020)
     - 🚒 [Emergency Reporting](https://emergencyreporting.com/)
@@ -31,19 +42,8 @@ layout: default
     - 🛫 University of North Dakota
 - 🏔️ **When not working** - Skiing, spending time with my partner and [our cat](https://deancat.netlify.app/)
 
-TODO: Headshot or other info
+::right::
 
-<style>
-h1 {
-  background-color: #2B90B6;
-  background-image: linear-gradient(45deg, #4EC5D4 10%, #146b8c 20%);
-  background-size: 100%;
-  -webkit-background-clip: text;
-  -moz-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  -moz-text-fill-color: transparent;
-}
-</style>
 
 ---
 layout: default
@@ -55,14 +55,13 @@ layout: default
 
 ---
 layout: statement
-level: 2
 ---
 
 <style>
 h1, h3 {color: #2B90B6;}
 </style>
 
-# _Goals_
+# Goal
 
 ## Know what you're getting yourself into
 
@@ -90,9 +89,12 @@ layout: two-cols
 - Still requires a Python env
 - New in 1.5 - [programmatic invocations](https://docs.getdbt.com/reference/programmatic-invocations)
 
+<br><br>
+👉 `dbt run` via programmatic and CLI invocations
+
 ::right::
 
-```bash
+```
 ❯ dbt run
 04:05  Running with dbt=1.5.2
 04:05  Registered adapter: duckdb=1.5.2
@@ -132,39 +134,43 @@ layout: two-cols
 - **Regular manual runs**
 - **Cron**
 - **CI/CD tooling schedulers**
-  - _GitHub Actions, CircleCI, Jenkins_
+  - GitHub Actions
+  - CircleCI
+  - Jenkins
 - **Basic cloud schedulers**
-  - _ECS scheduled tasks, GCP Cloud Scheduler, Azure Batch Scheduler_
+  - ECS scheduled tasks
+  - GCP Cloud Scheduler
+  - Azure Batch Scheduler
 
 ::right::
-<img src="https://i.imgur.com/tm7yfxo.png"/>
+![](/calendar.png)
 
 <br>
+
+```shell
+❯ crontab -l
+# run dbt every hour
+0 0 * * * dbt run
+```
+
+<br>
+
 ```yml
 # .circleci/config.yml
 jobs:
   run-dbt:
-    steps:
-      - checkout
-      - run: dbt build
-
+    steps: [checkout, {"run": "dbt run"}]
 workflows:
   daily-run-dbt:
     jobs:
       - run-dbt:
-          triggers:
-            - schedule:
-                cron: "0 0 * * *"
+          triggers: [{"schedule": {"cron": "0 0 * * *"}}]
 ```
 
 ---
 layout: statement
-level: 2
+hideInToc: true
 ---
-
-<style>
-h1, h3 {color: #2B90B6;}
-</style>
 
 # _Checkpoint_
 
@@ -193,26 +199,24 @@ layout: two-cols
   - Managing multiple dbt runs
   - Coupling your ingestion with dbt
   - Other ways to start jobs (i.e. sensors)
-  - Define your jobs in Python
+  - Define your jobs in code
 - **We’re going to talk about Airflow, but there’s alternatives**
   - dbt Cloud
-  - Dagster
-  - Prefect
+  - Established: Dagster, Prefect
   - Newer: Mage, Argo
   - Older: Luigi, Oozie, Azkaban
+  - [Is it pokemon or big data?](https://pixelastic.github.io/pokemonorbigdata/)
 
 ::right::
 
-<img src="https://airflow.apache.org/docs/apache-airflow/stable/_images/graph.png" />
-<br>
-<img src="https://raw.githubusercontent.com/astronomer/astronomer-cosmos/main/docs/_static/jaffle_shop_task_group.png" />
+![](/airflow_graph.png)
 
-<p style="text-align: center">
-  <a href="https://pixelastic.github.io/pokemonorbigdata/">Is it Pokemon or Big Data?</a>
-</p>
+![](/airflow_jaffle_dag.png)
+
 ---
 layout: default
 ---
+
 # Starting out with Airflow via the BashOperator
 
 ```python {all|10,15|18|all} {lines: true}
@@ -240,6 +244,7 @@ _"Starting today, run `dbt run`, then `dbt test` once an hour at the top of the 
 
 ---
 layout: two-cols
+hideInToc: true
 ---
 
 # BashOperator issues
@@ -256,11 +261,11 @@ layout: two-cols
 
 
 ::right::
-<img src="https://i.imgur.com/eskvZ9j.png"/>
+![](/dependency_hell.png)
 
 ---
 layout: statement
-level: 2
+hideInToc: true
 ---
 
 <style>
@@ -281,6 +286,7 @@ You are in race condition hell
 
 ---
 layout: two-cols
+hideInToc: true
 ---
 
 # What now?
@@ -345,10 +351,12 @@ layout: two-cols
   - In the context of Airflow, local dev gets even more difficult
 
 ::right::
-<img src="https://i.imgur.com/iJ1mUZU.png" />
+![](/containers.png)
+
 ---
 layout: default
 ---
+
 # Running dbt via the ECSOperator
 
 ```python {all|14} {lines: true}
@@ -377,7 +385,7 @@ _Not pictured: a lot of Terraform work_
 
 ---
 layout: statement
-level: 2
+hideInToc: true
 ---
 
 <style>
@@ -402,13 +410,6 @@ layout: statement
 
 # What we did at LaunchDarkly
 
-<!-- Todo: make diagram flow through subsequent slides
-Include year
-Include dbt version
-
-Audit dbt model
- -->
-
 <br>
 
 ```mermaid
@@ -423,7 +424,7 @@ flowchart LR
 
 ---
 layout: statement
-level: 2
+hideInToc: true
 ---
 
 # The early days
@@ -455,7 +456,7 @@ flowchart LR
 
 ---
 layout: statement
-level: 2
+hideInToc: true
 ---
 
 # The GCP days
@@ -485,7 +486,7 @@ flowchart LR
 
 ---
 layout: statement
-level: 2
+hideInToc: true
 ---
 
 # The AWS migration
@@ -495,8 +496,8 @@ level: 2
 flowchart LR
    A[GCP is so 2021]:::inactive
    --> B[The Python plugin and GCP no longer 'just works' \n Our architecture did not grow with our team \n LaunchDarkly is not a GCP shop]:::active
-   -- "Lift and shift - what could go wrong?"
-   --> C[Plugin moved to MWAA, things largely fine \n As we gradually cutover DAGs and load, things stop being fine \n We stare into the abyss and learn how Airflow actually works]:::active
+   -- "Lift and shift 🙏"
+   --> C[Shifted to MWAA, things largely fine \n As we gradually cutover DAGs and load, things not fine \n We learn how Airflow actually works]:::active
    -- We give up on the lift and shift
    --> D[dbt operations moved to ECS Fargate \n Deploys fully automated \n Plugin deleted]:::active
     classDef active fill:teal
@@ -515,7 +516,7 @@ flowchart LR
 
 ---
 layout: statement
-level: 2
+hideInToc: true
 ---
 # Today
 
@@ -547,6 +548,7 @@ layout: statement
 # Is this… good?
 
 <br>
+
 😬 I think this is the most scalable way to run dbt on Airflow
 
 🙂 We’re happy with it for our workload
