@@ -1,5 +1,5 @@
 {
-  "name": "meetup-slides",
+  "name": "dbt-meetup-slides",
   "private": true,
   "scripts": {
     "build": "slidev build",

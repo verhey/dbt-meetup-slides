@@ -1,11 +1,24 @@
-# Welcome to [Slidev](https://github.com/slidevjs/slidev)!
+# dbt-meetup-slides
 
-To start the slide show:
+## Background
 
-- `npm install`
-- `npm run dev`
-- visit http://localhost:3030
+This is a [slidev](https://sli.dev) project containing slides for a Seattle dbt users meetup talk in August 2023 on dbt-core and Apache Airflow.
 
-Edit the [slides.md](./slides.md) to see the changes.
+## Installation/Development
 
-Learn more about Slidev on [documentations](https://sli.dev/).
+Pre-requisites: A semi-recent version of Node
+
+1. Check out this repo
+2. Install dependencies with `npm install`
+3. Run a local version with `npm run dev`
+4. Edit `slides.md` with your changes
+
+## Deployment
+
+The `main` branch of this site is deployed to a Netlify site at TODO: LINK URL
+
+## References
+
+[Slidev layout documentation](https://sli.dev/builtin/layouts.html)
+
+[Slidev markdown documentation](https://sli.dev/guide/syntax.html)
