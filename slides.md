@@ -488,7 +488,7 @@ hideInToc: true
 %%{init: {'theme':'dark'}}%%
 flowchart LR
    A[GCP is so 2021]:::inactive
-   --> B[The Python plugin and GCP no longer 'just works' \n Our architecture did not grow with our team \n LaunchDarkly is not a GCP shop]:::active
+   --> B[The plugin no longer 'just works' \n Our systems did not evolve with our team \n LaunchDarkly is not a GCP shop]:::active
    -- "Lift and shift 🙏"
    --> C[Shifted to MWAA, things largely fine \n As we gradually cutover DAGs and load, things not fine \n We learn how Airflow actually works]:::active
    -- We give up on the lift and shift
