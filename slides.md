@@ -11,7 +11,7 @@ hideInToc: true
 
 # A comedy of Airflows
 
-Running dbt core in production the least bad way
+Adventures with production-izing dbt core
 
 Dean Verhey
 
