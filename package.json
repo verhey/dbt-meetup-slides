@@ -11,6 +11,9 @@
     "@slidev/theme-default": "latest",
     "@slidev/theme-seriph": "latest"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "@iconify-json/logos": "^1.1.34",
     "@mrdrogdrog/optional": "^1.2.1"
