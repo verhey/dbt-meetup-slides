@@ -6,7 +6,7 @@ This is a [slidev](https://sli.dev) project containing slides for a Seattle dbt 
 
 ## Installation/Development
 
-Pre-requisites: A semi-recent version of Node
+Pre-requisites: Node >= v20
 
 1. Check out this repo
 2. Install dependencies with `npm install`
@@ -15,7 +15,7 @@ Pre-requisites: A semi-recent version of Node
 
 ## Deployment
 
-The `main` branch of this site is deployed to a Netlify site at https://dean-meetup-slides.netlify.app
+The `main` branch of this site is deployed to a Netlify site at [dean-meetup-slides.netlify.app](https://dean-meetup-slides.netlify.app)
 
 ## References
 
