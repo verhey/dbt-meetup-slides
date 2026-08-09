@@ -15,7 +15,7 @@
     "node": ">=22"
   },
   "devDependencies": {
-    "@iconify-json/logos": "^1.2.11",
+    "@iconify-json/logos": "^1.2.12",
     "@mrdrogdrog/optional": "^1.2.1"
   }
 }
